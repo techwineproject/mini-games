@@ -20,9 +20,9 @@
       min-height: 100vh;
       overflow-x: hidden;
       position: relative;
+      cursor: crosshair;
     }
 
-    /* Animated Background - Fixed Color */
     .background {
       position: fixed;
       top: 0;
@@ -43,6 +43,87 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
+    .grid-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    .gaming-icons {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .gaming-icon {
+      position: absolute;
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.2);
+      animation: floatIcon 15s infinite linear;
+      pointer-events: none;
+    }
+
+    .gaming-icon:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .gaming-icon:nth-child(2) { left: 20%; animation-delay: 2s; font-size: 30px; }
+    .gaming-icon:nth-child(3) { left: 30%; animation-delay: 4s; }
+    .gaming-icon:nth-child(4) { left: 40%; animation-delay: 6s; font-size: 28px; }
+    .gaming-icon:nth-child(5) { left: 50%; animation-delay: 8s; }
+    .gaming-icon:nth-child(6) { left: 60%; animation-delay: 10s; font-size: 26px; }
+    .gaming-icon:nth-child(7) { left: 70%; animation-delay: 12s; }
+    .gaming-icon:nth-child(8) { left: 80%; animation-delay: 14s; font-size: 32px; }
+
+    @keyframes floatIcon {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.3;
+      }
+      90% {
+        opacity: 0.3;
+      }
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .cursor-trail {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.6), transparent);
+      pointer-events: none;
+      animation: cursorFade 1s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes cursorFade {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+
     .floating-shapes {
       position: absolute;
       width: 100%;
@@ -51,7 +132,6 @@
 
     .shape {
       position: absolute;
-      background: rgba(255, 255, 255, 0.1);
       border-radius: 50%;
       animation: float 25s infinite linear;
     }
@@ -61,6 +141,8 @@
       height: 100px;
       left: 15%;
       animation-delay: 0s;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.1));
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
     }
 
     .shape:nth-child(2) {
@@ -68,7 +150,8 @@
       height: 150px;
       left: 75%;
       animation-delay: 3s;
-      background: rgba(255, 255, 255, 0.05);
+      background: radial-gradient(circle, rgba(255, 107, 157, 0.2), rgba(255, 107, 157, 0.1));
+      box-shadow: 0 0 25px rgba(255, 107, 157, 0.3);
     }
 
     .shape:nth-child(3) {
@@ -76,6 +159,8 @@
       height: 80px;
       left: 45%;
       animation-delay: 6s;
+      background: radial-gradient(circle, rgba(196, 113, 245, 0.2), rgba(196, 113, 245, 0.1));
+      box-shadow: 0 0 15px rgba(196, 113, 245, 0.3);
     }
 
     .shape:nth-child(4) {
@@ -83,7 +168,8 @@
       height: 120px;
       left: 90%;
       animation-delay: 9s;
-      background: rgba(255, 255, 255, 0.08);
+      background: radial-gradient(circle, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
     }
 
     .shape:nth-child(5) {
@@ -91,7 +177,8 @@
       height: 180px;
       left: 25%;
       animation-delay: 12s;
-      background: rgba(255, 255, 255, 0.04);
+      background: radial-gradient(circle, rgba(255, 170, 0, 0.2), rgba(255, 170, 0, 0.1));
+      box-shadow: 0 0 30px rgba(255, 170, 0, 0.3);
     }
 
     @keyframes float {
@@ -111,7 +198,40 @@
       }
     }
 
-    /* Particles */
+    .binary-rain {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .binary-column {
+      position: absolute;
+      top: -100%;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: rgba(0, 212, 255, 0.3);
+      animation: binaryFall 10s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes binaryFall {
+      0% {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+    }
+
     .particles {
       position: absolute;
       width: 100%;
@@ -120,19 +240,33 @@
 
     .particle {
       position: absolute;
-      width: 3px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.7);
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
       animation: twinkle 4s infinite;
     }
 
-    @keyframes twinkle {
-      0%, 100% { opacity: 0; transform: scale(0); }
-      50% { opacity: 1; transform: scale(1); }
+    .particle:nth-child(odd) {
+      background: rgba(0, 212, 255, 0.8);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
     }
 
-    /* Loading Screen - Centered */
+    .particle:nth-child(even) {
+      background: rgba(255, 107, 157, 0.8);
+      box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+    }
+
+    @keyframes twinkle {
+      0%, 100% { 
+        opacity: 0; 
+        transform: scale(0) rotate(0deg); 
+      }
+      50% { 
+        opacity: 1; 
+        transform: scale(1.5) rotate(180deg); 
+      }
+    }
+
     .loading-screen {
       position: fixed;
       top: 0;
@@ -169,6 +303,7 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 30px auto;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
     }
 
     @keyframes spin {
@@ -194,7 +329,6 @@
       50% { opacity: 1; }
     }
 
-    /* Main Content */
     .main-content {
       display: flex;
       justify-content: center;
@@ -211,7 +345,7 @@
 
     .game-selection {
       text-align: center;
-      max-width: 1000px;
+      max-width: 1200px;
       width: 100%;
     }
 
@@ -229,6 +363,16 @@
       background-clip: text;
       margin-bottom: 15px;
       text-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+      }
+      to {
+        filter: drop-shadow(0 0 20px rgba(255, 107, 157, 0.5));
+      }
     }
 
     .header p {
@@ -248,14 +392,13 @@
       }
     }
 
-    /* Game Cards - Reduced Size */
     .games {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 30px;
       justify-content: center;
       padding: 0 20px;
-      max-width: 800px;
+      max-width: 1200px;
       margin: 0 auto;
     }
 
@@ -275,13 +418,33 @@
       margin: 0 auto;
     }
 
-    .game-card:nth-child(1) {
-      animation-delay: 0.2s;
+    .game-card.coming-soon {
+      opacity: 0.7;
+      cursor: default;
     }
 
-    .game-card:nth-child(2) {
-      animation-delay: 0.4s;
+    .game-card.coming-soon::after {
+      content: 'COMING SOON';
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: linear-gradient(45deg, #ff6b9d, #c471f5);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+      z-index: 5;
     }
+
+    .game-card:nth-child(1) { animation-delay: 0.1s; }
+    .game-card:nth-child(2) { animation-delay: 0.2s; }
+    .game-card:nth-child(3) { animation-delay: 0.3s; }
+    .game-card:nth-child(4) { animation-delay: 0.4s; }
+    .game-card:nth-child(5) { animation-delay: 0.5s; }
+    .game-card:nth-child(6) { animation-delay: 0.6s; }
 
     @keyframes slideInUp {
       from {
@@ -306,11 +469,11 @@
       transition: transform 0.6s;
     }
 
-    .game-card:hover::before {
+    .game-card:not(.coming-soon):hover::before {
       transform: translateX(100%);
     }
 
-    .game-card:hover {
+    .game-card:not(.coming-soon):hover {
       transform: translateY(-10px) scale(1.02);
       box-shadow: 0 25px 50px rgba(0, 212, 255, 0.3);
       border-color: rgba(0, 212, 255, 0.5);
@@ -329,7 +492,7 @@
       transition: transform 0.6s ease;
     }
 
-    .game-card:hover img {
+    .game-card:not(.coming-soon):hover img {
       transform: scale(1.1);
     }
 
@@ -347,7 +510,7 @@
       transition: opacity 0.3s ease;
     }
 
-    .game-card:hover .game-overlay {
+    .game-card:not(.coming-soon):hover .game-overlay {
       opacity: 1;
     }
 
@@ -405,6 +568,18 @@
       border: 1px solid rgba(255, 165, 0, 0.3);
     }
 
+    .difficulty.hard {
+      background: rgba(255, 69, 0, 0.2);
+      color: #ff4500;
+      border: 1px solid rgba(255, 69, 0, 0.3);
+    }
+
+    .difficulty.expert {
+      background: rgba(138, 43, 226, 0.2);
+      color: #8a2be2;
+      border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+
     .play-button {
       background: linear-gradient(45deg, #00d4ff, #0099cc);
       border: none;
@@ -424,7 +599,18 @@
       box-shadow: 0 6px 16px rgba(0, 212, 255, 0.4);
     }
 
-    /* Responsive Design */
+    .coming-soon .play-button {
+      background: linear-gradient(45deg, #666, #888);
+      cursor: not-allowed;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .coming-soon .play-button:hover {
+      background: linear-gradient(45deg, #666, #888);
+      transform: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
     @media (max-width: 768px) {
       .header h1 {
         font-size: 2.5rem;
@@ -461,7 +647,6 @@
   </style>
 </head>
 <body>
-  <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
     <div class="loading-content">
       <div class="loading-spinner"></div>
@@ -470,8 +655,22 @@
     </div>
   </div>
 
-  <!-- Animated Background -->
   <div class="background">
+    <div class="grid-pattern"></div>
+    
+    <div class="gaming-icons">
+      <div class="gaming-icon">🎮</div>
+      <div class="gaming-icon">🕹️</div>
+      <div class="gaming-icon">🎯</div>
+      <div class="gaming-icon">⚡</div>
+      <div class="gaming-icon">🚀</div>
+      <div class="gaming-icon">💎</div>
+      <div class="gaming-icon">🔥</div>
+      <div class="gaming-icon">⭐</div>
+    </div>
+    
+    <div class="binary-rain" id="binaryRain"></div>
+    
     <div class="floating-shapes">
       <div class="shape"></div>
       <div class="shape"></div>
@@ -479,10 +678,10 @@
       <div class="shape"></div>
       <div class="shape"></div>
     </div>
+    
     <div class="particles" id="particles"></div>
   </div>
 
-  <!-- Main Content -->
   <div class="main-content" id="mainContent">
     <div class="game-selection">
       <div class="header">
@@ -528,15 +727,31 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
+
+        <div class="game-card coming-soon">
+          <div class="game-image">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMyMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMjEyMTIxIi8+Cjx0ZXh0IHg9IjE2MCIgeT0iMTAwIiBmaWxsPSIjQzQ3MUY1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNTAiPuKaoO+4jzwvdGV4dD4KPHRleHQgeD0iMTYwIiB5PSIxNTAiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiI+V2ViIERldmVsb3BtZW50PC90ZXh0Pgo8L3N2Zz4K" alt="Web Development Challenge">
+          </div>
+          <div class="game-info">
+            <h2><i class="fab fa-html5"></i> Web Dev Challenge</h2>
+            <p class="game-description">Build websites and test your HTML, CSS, and JavaScript skills in real-time challenges.</p>
+            <div class="game-stats">
+              <span class="difficulty hard">Hard</span>
+              <button class="play-button">
+                <i class="fas fa-clock"></i> Soon
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+        
+
 
   <script>
-    // Create particles
     function createParticles() {
       const particlesContainer = document.getElementById('particles');
-      const particleCount = 60;
+      const particleCount = 80;
       
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
@@ -548,7 +763,45 @@
       }
     }
 
-    // Loading screen functionality
+    function createBinaryRain() {
+      const binaryContainer = document.getElementById('binaryRain');
+      const columnCount = 20;
+      
+      for (let i = 0; i < columnCount; i++) {
+        const column = document.createElement('div');
+        column.className = 'binary-column';
+        column.style.left = (i * 5) + '%';
+        column.style.animationDelay = Math.random() * 10 + 's';
+        
+        let binaryString = '';
+        for (let j = 0; j < 20; j++) {
+          binaryString += Math.random() > 0.5 ? '1' : '0';
+          if (j % 4 === 3) binaryString += '<br>';
+        }
+        column.innerHTML = binaryString;
+        
+        binaryContainer.appendChild(column);
+      }
+    }
+
+    function createCursorTrail(e) {
+      const trail = document.createElement('div');
+      trail.className = 'cursor-trail';
+      trail.style.left = e.clientX - 10 + 'px';
+      trail.style.top = e.clientY - 10 + 'px';
+      document.body.appendChild(trail);
+      
+      setTimeout(() => {
+        document.body.removeChild(trail);
+      }, 1000);
+    }
+
+    document.addEventListener('mousemove', function(e) {
+      if (Math.random() > 0.8) {
+        createCursorTrail(e);
+      }
+    });
+
     function hideLoadingScreen() {
       const loadingScreen = document.getElementById('loadingScreen');
       const mainContent = document.getElementById('mainContent');
@@ -559,41 +812,64 @@
       }, 300);
     }
 
-    // Navigation function with loading
     function navigateToGame(url) {
-      // Show loading effect
       const loadingScreen = document.getElementById('loadingScreen');
       const mainContent = document.getElementById('mainContent');
       
       loadingScreen.classList.remove('hidden');
       mainContent.classList.remove('visible');
       
-      // Simulate loading delay
       setTimeout(() => {
         window.location.href = url;
       }, 1000);
     }
 
-    // Initialize everything when page loads
     document.addEventListener('DOMContentLoaded', function() {
       createParticles();
+      createBinaryRain();
       
-      // Hide loading screen after everything is loaded
       setTimeout(() => {
         hideLoadingScreen();
       }, 2000);
     });
 
-    // Add click sound effect (optional)
-    document.querySelectorAll('.game-card').forEach(card => {
-      card.addEventListener('click', function() {
-        // Add click feedback
+    document.querySelectorAll('.game-card:not(.coming-soon)').forEach(card => {
+      card.addEventListener('click', function(e) {
         this.style.transform = 'translateY(-10px) scale(0.98)';
+        
+        const ripple = document.createElement('div');
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(0, 212, 255, 0.6)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s linear';
+        ripple.style.left = (e.clientX - this.offsetLeft - 25) + 'px';
+        ripple.style.top = (e.clientY - this.offsetTop - 25) + 'px';
+        ripple.style.width = '50px';
+        ripple.style.height = '50px';
+        ripple.style.pointerEvents = 'none';
+        
+        this.appendChild(ripple);
+        
         setTimeout(() => {
           this.style.transform = '';
-        }, 150);
+          if (this.contains(ripple)) {
+            this.removeChild(ripple);
+          }
+        }, 600);
       });
     });
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>
