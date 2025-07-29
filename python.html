@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+<meta charset="UTF-8">
+<title>🔥 Coding Puzzle Game</title>
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(120deg, #1e1e1e, #3b0a45);
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  transition: background 0.5s;
+  overflow-x: hidden;
+}
+
+/* === HEADER === */
+h1 {
+  text-align: center;
+  padding-top: 20px;
+  font-size: 2.3rem;
+  text-shadow: 2px 2px #000;
+}
+
+/* === INFO BAR === */
+.info {
+  display: flex;
+  justify-content: space-between;
+  max-width: 950px;
+  margin: 10px auto;
+  font-weight: bold;
+}
+.score { color: #8fff8f; font-size: 1.2rem; }
+.streak { color: #ff9d00; font-size: 1.1rem; }
+.timer { font-size: 1.2rem; color: #ff4f7a; font-weight: bold; }
+
+#progressBar {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 5px auto;
+  max-width: 950px;
+}
+#progressFill {
+  height: 100%;
+  background: #00ff9d;
+  width: 100%;
+  transition: width 1s linear;
+}
+
+/* === CONTAINER === */
+.container {
+  display: flex;
+  gap: 20px;
+  max-width: 950px;
+  margin: 20px auto;
+  padding: 20px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  animation: fadeIn 0.8s ease;
+}
+@keyframes fadeIn { from {opacity: 0;} to {opacity:1;} }
+
+.question-panel {
+  flex: 1;
+  background: #7d4cafd9;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+}
+
+.editor-panel {
+  flex: 2;
+  background: #4b0082c0;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+#editor { height: 350px; border: 1px solid #444; border-radius: 6px; }
+
+/* === BUTTONS === */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+button {
+  background: #00bfff;
+  color: #fff;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+}
+button:hover { background: #0080ff; transform: scale(1.1); }
+
+/* === OUTPUT === */
+#output {
+  background: #111;
+  color: #fff;
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  min-height: 50px;
+  font-family: monospace;
+}
+
+/*LEADERBOARD */
+#leaderboard {
+  max-width: 950px;
+  margin: 15px auto;
+  background: #222;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+#leaderboard h3 { text-align: center; color: #ffcc00; }
+#leaderboard ul { list-style: none; padding: 0; }
+#leaderboard li { padding: 5px; border-bottom: 1px solid #555; }
+
+/* Light Mode */
+.light-mode { background: #f0f0f0; color: #222; }
+.light-mode .question-panel { background: #d0a7ff; }
+.light-mode .editor-panel { background: #a682ff; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+</head>
+<body>
+
+<h1>🔥 Coding Puzzle Game</h1>
+
+<div class="info">
+  <div class="score">Score: <span id="score">0</span></div>
+  <div class="streak">🔥 Streak: <span id="streak">0</span></div>
+  
+</div>
+
+
+<div class="container">
+  <div class="question-panel">
+      <h3>Level <span id="level">1</span></h3>
+      <p id="problem"></p>
+      <button onclick="showHint()">💡 Hint</button>
+  </div>
+
+  <div class="editor-panel">
+      <div id="editor"></div>
+      <div class="controls">
+        <button onclick="checkPythonCode()">✅ Submit</button>
+        <button onclick="loadNewPuzzle()">⏭ Next</button>
+        <button onclick="toggleTheme()">🌗 Theme</button>
+        <button onclick="resetTimer()">⏱ Reset</button>
+      </div>
+      <div id="output">Results will appear here...</div>
+  </div>
+</div>
+
+<div id="leaderboard">
+  <h3>🏆 Leaderboard</h3>
+  <ul id="lbList"></ul>
+</div>
+
+<audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="failSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+<script>
+/*  Problem Set  */
+const problems =[
+  {
+    "prompt": "Write a function <code>add</code> that returns the sum of two numbers (<code>add(2,3)==5</code>).",
+    "template": "def add(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return add(2, 3) == 5 and add(10, 15) == 25\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, arithmetic"
+  },
+  {
+    "prompt": "Write a function <code>subtract</code> that returns the difference between two numbers (<code>subtract(8,3)==5</code>).",
+    "template": "def subtract(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return subtract(8, 3) == 5 and subtract(3, 8) == -5\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, arithmetic"
+  },
+  {
+    "prompt": "Write a function <code>multiply</code> that returns the product of two numbers (<code>multiply(2,4)==8</code>).",
+    "template": "def multiply(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return multiply(2,4)==8 and multiply(-3,2)==-6\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, multiplication"
+  },
+  {
+    "prompt": "Write a function <code>divide</code> that returns a / b as a float (<code>divide(10,2)==5.0</code>).",
+    "template": "def divide(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return divide(10,2)==5.0 and divide(7,2)==3.5\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, division"
+  },
+  {
+    "prompt": "Write a function <code>square</code> that returns the square of a number (<code>square(5)==25</code>).",
+    "template": "def square(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return square(5)==25 and square(-3)==9\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, arithmetic"
+  },
+  {
+    "prompt": "Write a function <code>cube</code> that returns the cube of a number (<code>cube(3)==27</code>).",
+    "template": "def cube(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return cube(3)==27 and cube(-2)==-8\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, arithmetic"
+  },
+  {
+    "prompt": "Write a function <code>absolute</code> that returns the absolute value of a number (<code>absolute(-9)==9</code>).",
+    "template": "def absolute(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return absolute(-9)==9 and absolute(5)==5\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, abs"
+  },
+  {
+    "prompt": "Write a function <code>maximum</code> that returns the larger of two numbers (<code>maximum(2,10)==10</code>).",
+    "template": "def maximum(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return maximum(2,10)==10 and maximum(-2,-5)==-2\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "max, functions, comparison"
+  },
+  {
+    "prompt": "Write a function <code>minimum</code> that returns the smaller of two numbers (<code>minimum(2, 10)==2</code>).",
+    "template": "def minimum(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return minimum(2,10)==2 and minimum(-2,-5)==-5\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "min, functions, comparison"
+  },
+  {
+    "prompt": "Write a function <code>is_even</code> that returns <code>True</code> if n is even, <code>False</code> otherwise (<code>is_even(4)==True</code>).",
+    "template": "def is_even(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_even(4)==True and is_even(5)==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "functions, modulo, if"
+  },
+  {
+    "prompt": "Write a function <code>is_odd</code> that returns <code>True</code> if n is odd (<code>is_odd(7)==True</code>).",
+    "template": "def is_odd(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_odd(7)==True and is_odd(8)==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "modulo, conditionals, functions"
+  },
+  {
+    "prompt": "Write a function <code>reverse_string</code> that returns the reverse of a string (<code>reverse_string('club')=='bulc'</code>).",
+    "template": "def reverse_string(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return reverse_string('club')=='bulc' and reverse_string('abcd')=='dcba'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, slicing"
+  },
+  {
+    "prompt": "Write a function <code>is_palindrome</code> that returns <code>True</code> if s is a palindrome (<code>is_palindrome('abba')==True</code>).",
+    "template": "def is_palindrome(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_palindrome('abba')==True and is_palindrome('python')==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, slicing, logic"
+  },
+  {
+    "prompt": "Write a function <code>contains_substring</code> that returns <code>True</code> if sub is a substring of s (<code>contains_substring('hello', 'ell')==True</code>).",
+    "template": "def contains_substring(s, sub):\n    # your code here",
+    "testScript": "def run_tests():\n    return contains_substring('hello', 'ell')==True and contains_substring('hello', 'abc')==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, in-operator"
+  },
+  {
+    "prompt": "Write a function <code>replace_spaces</code> that replaces all spaces with underscores in s (<code>replace_spaces('a b c')=='a_b_c'</code>).",
+    "template": "def replace_spaces(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return replace_spaces('a b c')=='a_b_c' and replace_spaces('club')== 'club'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, replace"
+  },
+  {
+    "prompt": "Write a function <code>split_words</code> that splits s into a list of words (<code>split_words('a b c')==['a','b','c']</code>).",
+    "template": "def split_words(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return split_words('a b c')==['a','b','c'] and split_words('hello')==['hello']\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, split"
+  },
+  {
+    "prompt": "Write a function <code>capitalize_words</code> that returns s with each word capitalized (<code>capitalize_words('hello world')=='Hello World'</code>).",
+    "template": "def capitalize_words(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return capitalize_words('hello world')=='Hello World' and capitalize_words('python code')=='Python Code'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, split/join, methods"
+  },
+  {
+    "prompt": "Write a function <code>to_upper</code> that returns s in uppercase (<code>to_upper('club')=='CLUB'</code>).",
+    "template": "def to_upper(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return to_upper('club')=='CLUB' and to_upper('Abc')=='ABC'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, upper()"
+  },
+  {
+    "prompt": "Write a function <code>to_lower</code> that returns s in lowercase (<code>to_lower('PyTHon')=='python'</code>).",
+    "template": "def to_lower(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return to_lower('PyTHon')=='python' and to_lower('XyZ')=='xyz'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, lower()"
+  },
+  {
+    "prompt": "Write a function <code>length</code> that returns the length of string s (<code>length('club')==4</code>).",
+    "template": "def length(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return length('club')==4 and length('')==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, len()"
+  },
+  {
+    "prompt": "Write a function <code>count_vowels</code> that counts the number of vowels in a string (<code>count_vowels('hello')==2</code>).",
+    "template": "def count_vowels(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return count_vowels('hello')==2 and count_vowels('sky')==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, loops"
+  },
+  {
+    "prompt": "Write a function <code>get_first</code> that returns the first element of lst (<code>get_first([5,6,7])==5</code>).",
+    "template": "def get_first(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return get_first([5,6,7])==5 and get_first([1])==1\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, indexing"
+  },
+  {
+    "prompt": "Write a function <code>get_last</code> that returns the last element of lst (<code>get_last([5,6,7])==7</code>).",
+    "template": "def get_last(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return get_last([5,6,7])==7 and get_last([1,2])==2\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, indexing"
+  },
+  {
+    "prompt": "Write a function <code>length_list</code> that returns the number of elements in lst (<code>length_list([1,2,3])==3</code>).",
+    "template": "def length_list(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return length_list([1,2,3])==3 and length_list([])==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, len"
+  },
+  {
+    "prompt": "Write a function <code>sum_list</code> that returns the sum of all numbers in a list (<code>sum_list([1,2,3])==6</code>).",
+    "template": "def sum_list(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return sum_list([1,2,3])==6 and sum_list([])==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, loops, sum"
+  },
+  {
+    "prompt": "Write a function <code>find_max</code> that returns the largest element in lst (<code>find_max([3,8,2])==8</code>).",
+    "template": "def find_max(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return find_max([3,8,2])==8 and find_max([-2,-7,-1])==-1\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, max, loops"
+  },
+  {
+    "prompt": "Write a function <code>find_min</code> that returns the smallest element in lst (<code>find_min([3,8,2])==2</code>).",
+    "template": "def find_min(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return find_min([3,8,2])==2 and find_min([-2,-7,-1])==-7\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, min, loops"
+  },
+  {
+    "prompt": "Write a function <code>average</code> that returns the average of a list of numbers (<code>average([2,4,6])==4.0</code>).",
+    "template": "def average(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return average([2,4,6])==4.0 and average([5])==5.0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, arithmetic"
+  },
+  {
+    "prompt": "Write a function <code>append_to_list</code> that appends item to lst and returns it (<code>append_to_list([1,2],3)==[1,2,3]</code>).",
+    "template": "def append_to_list(lst, item):\n    # your code here",
+    "testScript": "def run_tests():\n    return append_to_list([1,2],3)==[1,2,3] and append_to_list([],0)==[0]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, append"
+  },
+  {
+    "prompt": "Write a function <code>remove_item</code> that removes item from lst if present and returns the list (<code>remove_item([1,2,3],2)==[1,3]</code>).",
+    "template": "def remove_item(lst, item):\n    # your code here",
+    "testScript": "def run_tests():\n    return remove_item([1,2,3],2)==[1,3] and remove_item([1,2,3],4)==[1,2,3]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, remove"
+  },
+  {
+    "prompt": "Write a function <code>count_item</code> that returns how many times item occurs in lst (<code>count_item([1,2,2,3],2)==2</code>).",
+    "template": "def count_item(lst, item):\n    # your code here",
+    "testScript": "def run_tests():\n    return count_item([1,2,2,3],2)==2 and count_item([1,2,3],4)==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, count"
+  },
+  {
+    "prompt": "Write a function <code>list_reverse</code> that returns a new list which is the reverse of lst (<code>list_reverse([1,2,3])==[3,2,1]</code>).",
+    "template": "def list_reverse(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return list_reverse([1,2,3])==[3,2,1] and list_reverse([])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, slicing"
+  },
+  {
+    "prompt": "Write a function <code>list_slice</code> that returns items from index i to j of lst (<code>list_slice([1,2,3,4],1,3)==[2,3]</code>).",
+    "template": "def list_slice(lst, i, j):\n    # your code here",
+    "testScript": "def run_tests():\n    return list_slice([1,2,3,4],1,3)==[2,3] and list_slice([1,2],0,1)==[1]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, slicing"
+  },
+  {
+    "prompt": "Write a function <code>contains_item</code> that returns True if item in lst (<code>contains_item([1,2],2)==True</code>).",
+    "template": "def contains_item(lst, item):\n    # your code here",
+    "testScript": "def run_tests():\n    return contains_item([1,2],2)==True and contains_item([1,2],3)==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, in-operator"
+  },
+  {
+    "prompt": "Write a function <code>all_even</code> that returns True if every element in lst is even (<code>all_even([2,4,6])==True</code>).",
+    "template": "def all_even(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return all_even([2,4,6])==True and all_even([2,3,4])==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, all, loops"
+  },
+  {
+    "prompt": "Write a function <code>unique</code> that returns a list of unique items from lst, order preserved (<code>unique([1,2,2,3])==[1,2,3]</code>).",
+    "template": "def unique(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return unique([1,2,2,3])==[1,2,3] and unique([])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sets, loops"
+  },
+  {
+    "prompt": "Write a function <code>duplicate_items</code> that returns the list of items appearing more than once in lst (<code>duplicate_items([1,2,2,3])==[2]</code>).",
+    "template": "def duplicate_items(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return duplicate_items([1,2,2,3])==[2] and duplicate_items([1,1,2,2])==[1,2]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, count, sets"
+  },
+  {
+    "prompt": "Write a function <code>factorial</code> that returns n! for n>=0 (<code>factorial(5)==120</code>).",
+    "template": "def factorial(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return factorial(5)==120 and factorial(0)==1\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "math, loops, recursion"
+  },
+  {
+    "prompt": "Write a function <code>fibonacci</code> that returns the nth Fibonacci number (<code>fibonacci(0)==0</code>, <code>fibonacci(5)==5</code>).",
+    "template": "def fibonacci(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return fibonacci(0)==0 and fibonacci(5)==5\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "recursion, loops, math"
+  },
+  {
+    "prompt": "Write a function <code>is_prime</code> that returns True if n>1 is prime (<code>is_prime(5)==True</code>, <code>is_prime(4)==False</code>).",
+    "template": "def is_prime(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_prime(2)==True and is_prime(9)==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "primality, loops, math"
+  },
+  {
+    "prompt": "Write a function <code>gcd</code> that returns the greatest common divisor of a and b (<code>gcd(12, 18)==6</code>).",
+    "template": "def gcd(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return gcd(12,18)==6 and gcd(17,13)==1\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "math, loops"
+  },
+  {
+    "prompt": "Write a function <code>count_digits</code> that returns number of digits in n (<code>count_digits(12345)==5</code>).",
+    "template": "def count_digits(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return count_digits(12345)==5 and count_digits(0)==1\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "numbers, loops, math"
+  },
+  {
+    "prompt": "Write a function <code>sum_digits</code> that returns the sum of digits of n (<code>sum_digits(123)==6</code>).",
+    "template": "def sum_digits(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return sum_digits(123)==6 and sum_digits(405)==9\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "loops, math"
+  },
+  {
+    "prompt": "Write a function <code>reverse_number</code> that returns the integer whose digits of n are reversed (<code>reverse_number(1234)==4321</code>).",
+    "template": "def reverse_number(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return reverse_number(1234)==4321 and reverse_number(101)==101\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "math, str(), slicing"
+  },
+  {
+    "prompt": "Write a function <code>is_armstrong</code> that returns True if n is an Armstrong number (e.g., <code>153==1**3+5**3+3**3</code>).",
+    "template": "def is_armstrong(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_armstrong(153)==True and is_armstrong(100)==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "math, loops, pow"
+  },
+  {
+    "prompt": "Write a function <code>next_prime</code> that returns the smallest prime greater than n (<code>next_prime(10)==11</code>).",
+    "template": "def next_prime(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return next_prime(10)==11 and next_prime(17)==19\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "loops, math"
+  },
+  {
+    "prompt": "Write a function <code>list_primes</code> that returns a list of primes less than n (<code>list_primes(10)==[2,3,5,7]</code>).",
+    "template": "def list_primes(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return list_primes(10)==[2,3,5,7] and list_primes(3)==[2]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "sieve, lists, loops"
+  },
+  {
+    "prompt": "Write a function <code>count_letters</code> that returns dict mapping char to freq in s (<code>count_letters('miss') == {'m':1,'i':1,'s':2}</code>).",
+    "template": "def count_letters(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return count_letters('miss') == {'m':1,'i':1,'s':2} and count_letters('')=={}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict, loops"
+  },
+  {
+    "prompt": "Write a function <code>invert_dict</code> that inverts the keys & values of d (<code>invert_dict({'a':1,'b':2}) == {1:'a', 2:'b'}</code>).",
+    "template": "def invert_dict(d):\n    # your code here",
+    "testScript": "def run_tests():\n    return invert_dict({'a':1,'b':2})=={1:'a',2:'b'}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dicts, for-loops"
+  },
+  {
+    "prompt": "Write a function <code>merge_dicts</code> to combine d1 & d2 (d2 overwrites d1) (<code>merge_dicts({'a':1},{'a':5,'b':2})=={'a':5,'b':2}</code>).",
+    "template": "def merge_dicts(d1, d2):\n    # your code here",
+    "testScript": "def run_tests():\n    return merge_dicts({'a':1},{'a':5,'b':2})=={'a':5,'b':2}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict, update"
+  },
+  {
+    "prompt": "Write a function <code>key_with_max_value</code> that returns key with largest value in d (<code>key_with_max_value({'a':2,'b':5})=='b'</code>).",
+    "template": "def key_with_max_value(d):\n    # your code here",
+    "testScript": "def run_tests():\n    return key_with_max_value({'a':2,'b':5})=='b'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict, max"
+  },
+  {
+    "prompt": "Write a function <code>values_sorted</code> that returns list of values from d sorted ascending (<code>values_sorted({'a':3,'b':1})==[1,3]</code>).",
+    "template": "def values_sorted(d):\n    # your code here",
+    "testScript": "def run_tests():\n    return values_sorted({'a':3,'b':1})==[1,3]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict, values, sorting"
+  },
+  {
+    "prompt": "Write a function <code>unique_elements</code> that returns list of unique items in lst (<code>unique_elements([1,1,2,3])==[1,2,3]</code>).",
+    "template": "def unique_elements(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return unique_elements([1,2,2,3])==[1,2,3] and unique_elements([])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sets"
+  },
+  {
+    "prompt": "Write a function <code>intersection</code> that returns list of common elements in lst1 and lst2, unique, any order (<code>intersection([1,2,3],[2,3,4])==[2,3]</code>).",
+    "template": "def intersection(lst1,lst2):\n    # your code here",
+    "testScript": "def run_tests():\n    return sorted(intersection([1,2,3],[2,3,4]))==[2,3] and intersection([1],[2])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sets"
+  },
+  {
+    "prompt": "Write a function <code>union</code> that returns all unique elements from lst1 and lst2 combined (<code>union([1,2],[2,3])==[1,2,3]</code>).",
+    "template": "def union(lst1,lst2):\n    # your code here",
+    "testScript": "def run_tests():\n    return sorted(union([1,2],[2,3]))==[1,2,3] and sorted(union([],[5]))==[5]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sets"
+  },
+  {
+    "prompt": "Write a function <code>difference</code> that returns items in lst1 not in lst2 (<code>difference([1,2,3],[2,4])==[1,3]</code>).",
+    "template": "def difference(lst1,lst2):\n    # your code here",
+    "testScript": "def run_tests():\n    return sorted(difference([1,2,3],[2,4]))==[1,3] and difference([1],[1])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sets"
+  },
+  {
+    "prompt": "Write a function <code>count_words</code> that returns number of words in s, words separated by space(s) (<code>count_words('hi there')==2</code>).",
+    "template": "def count_words(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return count_words('hi there')==2 and count_words('')==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, split"
+  },
+  {
+    "prompt": "Write a function <code>numbers_to_string</code> that joins list of ints as a single string (<code>numbers_to_string([1,2,3])=='123'</code>).",
+    "template": "def numbers_to_string(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return numbers_to_string([1,2,3])=='123' and numbers_to_string([7,4])=='74'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, join, map"
+  },
+  {
+    "prompt": "Write a function <code>get_indices</code> returning list of indices of item in lst (<code>get_indices([1,2,3,2],2)==[1,3]</code>).",
+    "template": "def get_indices(lst, item):\n    # your code here",
+    "testScript": "def run_tests():\n    return get_indices([1,2,3,2],2)==[1,3] and get_indices([5],5)==[0]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "enumerate, lists"
+  },
+  {
+    "prompt": "Write a function <code>list_comp_square</code> returning [x*x for x in lst] (<code>list_comp_square([2,3])==[4,9]</code>).",
+    "template": "def list_comp_square(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return list_comp_square([2,3])==[4,9] and list_comp_square([])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "list comprehensions"
+  },
+  {
+    "prompt": "Write a function <code>char_list</code> returning list of characters of s (<code>char_list('cat')==['c','a','t']</code>).",
+    "template": "def char_list(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return char_list('cat')==['c','a','t'] and char_list('')==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, lists"
+  },
+  {
+    "prompt": "Write a function <code>square_dict</code> returning dict mapping x->x*x for x in lst (<code>square_dict([2,3])=={2:4,3:9}</code>).",
+    "template": "def square_dict(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return square_dict([2,3])=={2:4,3:9} and square_dict([])=={}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict comprehensions"
+  },
+  {
+    "prompt": "Write a function <code>filter_even</code> returning new list of even numbers from lst (<code>filter_even([1,2,3,4])==[2,4]</code>).",
+    "template": "def filter_even(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return filter_even([1,2,3,4])==[2,4] and filter_even([1])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "list comprehensions"
+  },
+  {
+    "prompt": "Write a function <code>filter_vowels</code> returning new list of vowels from s (<code>filter_vowels('hello')==['e','o']</code>).",
+    "template": "def filter_vowels(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return filter_vowels('hello')==['e','o'] and filter_vowels('bcdfg')==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "list comprehensions, strings"
+  },
+  {
+    "prompt": "Write a function <code>list_to_set</code> that returns a set containing all elements from lst (<code>list_to_set([1,2,2])==set([1,2])</code>).",
+    "template": "def list_to_set(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return list_to_set([1,2,2])==set([1,2]) and list_to_set([])==set()\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "sets"
+  },
+  {
+    "prompt": "Write a function <code>is_boolean</code> returning True if x type is <code>bool</code> (<code>is_boolean(True)==True, is_boolean(1)==False</code>).",
+    "template": "def is_boolean(x):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_boolean(True)==True and is_boolean(False)==True and is_boolean(1)==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "type checking"
+  },
+  {
+    "prompt": "Write a function <code>safe_divide</code> returning <code>a/b</code> as float or <code>None</code> if b is zero. (<code>safe_divide(8,0)==None</code>)",
+    "template": "def safe_divide(a, b):\n    # your code here",
+    "testScript": "def run_tests():\n    return safe_divide(10,2)==5.0 and safe_divide(9,0)==None\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "exceptions, try/except"
+  },
+  {
+    "prompt": "Write a function <code>sum_even</code> that returns the sum of all even numbers in lst (<code>sum_even([1,2,3,4])==6</code>).",
+    "template": "def sum_even(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return sum_even([1,2,3,4])==6 and sum_even([1,3])==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "sum, filter, lists"
+  },
+  {
+    "prompt": "Write a function <code>swap_case</code> that swaps upper/lowercase of all letters in s (<code>swap_case('aBc')=='AbC'</code>).",
+    "template": "def swap_case(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return swap_case('aBc')=='AbC' and swap_case('XYZ')=='xyz'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, methods"
+  },
+  {
+    "prompt": "Write a function <code>ascii_sum</code> that returns the sum of ASCII codes of all chars in s (<code>ascii_sum('ab')==195</code>).",
+    "template": "def ascii_sum(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return ascii_sum('ab')==195 and ascii_sum('')==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "ord, sum"
+  },
+  {
+    "prompt": "Write a function <code>middle_element</code> that returns the middle element (or left-middle) of lst (<code>middle_element([1,2,3])==2, middle_element([1,2,3,4])==2</code>).",
+    "template": "def middle_element(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return middle_element([1,2,3])==2 and middle_element([1,2,3,4])==2\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, indexing"
+  },
+  {
+    "prompt": "Write a function <code>has_duplicates</code> returning True if any duplicate exists in lst (<code>has_duplicates([1,2,2])==True</code>).",
+    "template": "def has_duplicates(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return has_duplicates([1,2,2])==True and has_duplicates([1,2])==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "sets, lists"
+  },
+  {
+    "prompt": "Write a function <code>flatten_list</code> that takes list of lists and returns flat list (<code>flatten_list([[1,2],[3,4]])==[1,2,3,4]</code>).",
+    "template": "def flatten_list(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return flatten_list([[1,2],[3,4]])==[1,2,3,4] and flatten_list([])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, loops"
+  },
+  {
+    "prompt": "Write a function <code>zip_lists</code> that zips lst1 and lst2 as tuples (<code>zip_lists([1,2],['a','b'])==[(1,'a'),(2,'b')]</code>).",
+    "template": "def zip_lists(lst1, lst2):\n    # your code here",
+    "testScript": "def run_tests():\n    return zip_lists([1,2],['a','b'])==[(1,'a'),(2,'b')] and zip_lists([],[1])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "zip, lists"
+  },
+  {
+    "prompt": "Write a function <code>dictionary_from_lists</code> that returns dict mapping keys to values (<code>dictionary_from_lists(['a','b'],[1,2])=={'a':1,'b':2}</code>).",
+    "template": "def dictionary_from_lists(keys, values):\n    # your code here",
+    "testScript": "def run_tests():\n    return dictionary_from_lists(['a','b'],[1,2])=={'a':1,'b':2}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "zip, dict"
+  },
+  {
+    "prompt": "Write a function <code>strip_punctuation</code> that removes all ',.?!' from s (<code>strip_punctuation('a,bc!')=='abc'</code>).",
+    "template": "def strip_punctuation(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return strip_punctuation('a,bc!')=='abc' and strip_punctuation('a.b,c')== 'abc'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, replace"
+  },
+  {
+    "prompt": "Write a function <code>right_align</code> that pads s with spaces on the left to width n (<code>right_align('hi',5)=='   hi'</code>).",
+    "template": "def right_align(s, n):\n    # your code here",
+    "testScript": "def run_tests():\n    return right_align('hi',5)=='   hi' and right_align('abc',3)=='abc'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str.rjust"
+  },
+  {
+    "prompt": "Write a function <code>count_upper</code> that returns count of uppercase letters in s (<code>count_upper('aBcD')==2</code>).",
+    "template": "def count_upper(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return count_upper('aBcD')==2 and count_upper('xyz')==0\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, loop, isupper"
+  },
+  {
+    "prompt": "Write a function <code>all_true</code> that returns True if every item in lst is True (<code>all_true([True,1,'hi'])</code>).",
+    "template": "def all_true(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return all_true([True,1,'hi'])==True and all_true([True,0])==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "all(), boolean"
+  },
+  {
+    "prompt": "Write a function <code>any_true</code> that returns True if any item in lst is True (<code>any_true([False,0,1])==True</code>).",
+    "template": "def any_true(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return any_true([False,0,1])==True and any_true([False,0])==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "any(), boolean"
+  },
+  {
+    "prompt": "Write a function <code>truncate_string</code> that returns s up to length n (<code>truncate_string('hello',2)=='he'</code>).",
+    "template": "def truncate_string(s, n):\n    # your code here",
+    "testScript": "def run_tests():\n    return truncate_string('hello',2)=='he' and truncate_string('hi',5)=='hi'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, slicing"
+  },
+  {
+    "prompt": "Write a function <code>is_leap_year</code> returning True for leap years (<code>is_leap_year(2020)==True, is_leap_year(2100)==False</code>).",
+    "template": "def is_leap_year(year):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_leap_year(2020) and not is_leap_year(2019) and not is_leap_year(2100) and is_leap_year(2000)\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "logic, if"
+  },
+  {
+    "prompt": "Write a function <code>multiply_all</code> that returns the product of all numbers in lst (<code>multiply_all([2,3,4])==24</code>).",
+    "template": "def multiply_all(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return multiply_all([2,3,4])==24 and multiply_all([3])==3\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "loops, math"
+  },
+  {
+    "prompt": "Write a function <code>swap</code> that returns b,a (<code>swap(2,3)==(3,2)</code>).",
+    "template": "def swap(a,b):\n    # your code here",
+    "testScript": "def run_tests():\n    return swap(2,3)==(3,2) and swap('x','y')==('y','x')\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "tuples"
+  },
+  {
+    "prompt": "Write a function <code>is_sorted</code> returning True if lst is sorted ascending (<code>is_sorted([1,2,3])==True</code>).",
+    "template": "def is_sorted(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_sorted([1,2,3])==True and is_sorted([3,2,1])==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sorting"
+  },
+  {
+    "prompt": "Write a function <code>read_first_line</code> returning the first line of a file named fname (return None if it can't be read).",
+    "template": "def read_first_line(fname):\n    # your code here",
+    "testScript": "def run_tests():\n    try:\n        with open('testfile.txt','w') as f:\n            f.write('hello\\nworld')\n        return read_first_line('testfile.txt')=='hello'\n    except:\n        return read_first_line('notfound')==None\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "file, exceptions"
+  },
+  {
+    "prompt": "Write a function <code>to_float</code> that returns the float value of s or None if not possible (<code>to_float('3.14')==3.14</code>).",
+    "template": "def to_float(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return to_float('3.14')==3.14 and to_float('abc')==None\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "exceptions, float"
+  },
+  {
+    "prompt": "Write a function <code>repeat</code> that concatenates string s n times (<code>repeat('ab',3)=='ababab'</code>).",
+    "template": "def repeat(s,n):\n    # your code here",
+    "testScript": "def run_tests():\n    return repeat('ab',3)=='ababab' and repeat('',4)==''\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, multiplication"
+  },
+  {
+    "prompt": "Write a function <code>get_middle_char</code> returning middle char of s (left-middle for even length) (<code>get_middle_char('abc')=='b'</code>).",
+    "template": "def get_middle_char(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return get_middle_char('abc')=='b' and get_middle_char('abcd')=='b'\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, indexing"
+  },
+  {
+    "prompt": "Write a function <code>mirror_string</code> that returns s + reverse of s (<code>mirror_string('abc')=='abccba'</code>).",
+    "template": "def mirror_string(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return mirror_string('abc')=='abccba' and mirror_string('')==''\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "str, slicing"
+  },
+  {
+    "prompt": "Write a function <code>char_frequency</code> that returns dict mapping char to count in s, ignoring case (<code>char_frequency('Aa')=={'a':2}</code>).",
+    "template": "def char_frequency(s):\n    # your code here",
+    "testScript": "def run_tests():\n    return char_frequency('Aa')=={'a':2} and char_frequency('')=={}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict, lower, str"
+  },
+  {
+    "prompt": "Write a function <code>is_sublist</code> that returns True if sub is a consecutive sublist of lst (<code>is_sublist([2,3],[1,2,3,4])==True</code>).",
+    "template": "def is_sublist(sub,lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_sublist([2,3],[1,2,3,4])==True and is_sublist([3,5],[1,2,3,4])==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, slices"
+  },
+  {
+    "prompt": "Write a function <code>repeat_list</code> that repeats lst n times (<code>repeat_list([1,2],2)==[1,2,1,2]</code>).",
+    "template": "def repeat_list(lst, n):\n    # your code here",
+    "testScript": "def run_tests():\n    return repeat_list([1,2],2)==[1,2,1,2] and repeat_list([],3)==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, multiplication"
+  },
+  {
+    "prompt": "Write a function <code>remove_none</code> that returns new list without None in lst (<code>remove_none([1,None,2])==[1,2]</code>).",
+    "template": "def remove_none(lst):\n    # your code here",
+    "testScript": "def run_tests():\n    return remove_none([1,None,2])==[1,2] and remove_none([None])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "filter, loops"
+  },
+  {
+    "prompt": "Write a function <code>powers_of_two</code> returning [1,2,4,...,2**n] for n>=0 (<code>powers_of_two(3)==[1,2,4,8]</code>).",
+    "template": "def powers_of_two(n):\n    # your code here",
+    "testScript": "def run_tests():\n    return powers_of_two(3)==[1,2,4,8] and powers_of_two(0)==[1]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "powers, lists"
+  },
+  {
+    "prompt": "Write a function <code>is_anagram</code> returning True if s1 is an anagram of s2 (<code>is_anagram('silent','listen')==True</code>).",
+    "template": "def is_anagram(s1,s2):\n    # your code here",
+    "testScript": "def run_tests():\n    return is_anagram('listen','silent')==True and is_anagram('listen','stone')==False\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "strings, sort"
+  },
+  {
+    "prompt": "Write a function <code>find_missing</code> returning items in lst1 not in lst2 (<code>find_missing([1,2,3],[2,3])==[1]</code>).",
+    "template": "def find_missing(lst1,lst2):\n    # your code here",
+    "testScript": "def run_tests():\n    return find_missing([1,2,3],[2,3])==[1] and find_missing([1],[1])==[]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, sets, difference"
+  },
+  {
+    "prompt": "Write a function <code>zero_matrix</code> returning an m x n matrix (list-of-lists) of zeroes.",
+    "template": "def zero_matrix(m,n):\n    # your code here",
+    "testScript": "def run_tests():\n    return zero_matrix(2,2)==[[0,0],[0,0]] and zero_matrix(1,3)==[[0,0,0]]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "lists, loops, 2D"
+  },
+  {
+    "prompt": "Write a function <code>transpose</code> returning the transpose of a matrix (list-of-lists).",
+    "template": "def transpose(matrix):\n    # your code here",
+    "testScript": "def run_tests():\n    return transpose([[1,2],[3,4]])==[[1,3],[2,4]]\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "zip, lists, 2D"
+  },
+  {
+    "prompt": "Write a function <code>flatten_dict</code> to return dict with keys k+'.'+kk for dict of dicts (<code>flatten_dict({'a':{'b':1}})=={'a.b':1}</code>).",
+    "template": "def flatten_dict(d):\n    # your code here",
+    "testScript": "def run_tests():\n    return flatten_dict({'a':{'b':1}})=={'a.b':1} and flatten_dict({'x':2})=={'x':2}\nif run_tests():\n    print('CORRECT')\nelse:\n    print('WRONG')",
+    "concept": "dict, recursion"
+  }
+
+];
+let current = 0, score = 0, streak = 0, time = 40;
+document.getElementById("problem").innerHTML = problems[0].prompt;
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+shuffle(problems);
+
+
+
+let editor;
+require.config({ paths:{ vs:'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+require(['vs/editor/editor.main'], () => {
+  editor = monaco.editor.create(document.getElementById('editor'), {
+    value: problems[0].template,
+    language: 'python', theme: 'vs-dark', automaticLayout:true
+  });
+});
+
+
+let pyodideReady = false;
+let pyodide;
+
+async function checkPythonCode() {
+  const pyCode = editor.getValue();
+  const testScript = problems[current].testScript;
+  const fullCode = `
+import sys
+from io import StringIO
+
+stdout = sys.stdout
+sys.stdout = StringIO()
+
+try:
+${pyCode.split('\n').map(line => '  ' + line).join('\n')}
+${testScript.split('\n').map(line => '  ' + line).join('\n')}
+  output = sys.stdout.getvalue()
+finally:
+  sys.stdout = stdout
+
+output
+`;
+
+  const outputDiv = document.getElementById("output");
+
+  try {
+    if (!pyodideReady) {
+      pyodide = await loadPyodide();
+      pyodideReady = true;
+    }
+
+    const result = await pyodide.runPythonAsync(fullCode);
+
+    if (result.includes("CORRECT")) {
+      score += 10;
+      streak++;
+      document.getElementById("score").innerText = score;
+      document.getElementById("streak").innerText = streak;
+      outputDiv.innerText = "✅ Correct! Level Up!";
+      document.getElementById("successSound").play();
+      saveLeaderboard(score);
+    } else {
+      streak = 0;
+      document.getElementById("streak").innerText = streak;
+      outputDiv.innerText = "❌ Wrong! Try Again!\n" + result;
+      document.getElementById("failSound").play();
+    }
+  } catch (err) {
+    outputDiv.innerText = "❌ Error:\n" + err.message;
+  }
+
+
+}
+function loadNewPuzzle(){
+  current = (current + 1) % problems.length;
+  if (current === 0) shuffle(problems); 
+
+  document.getElementById("problem").innerHTML = problems[current].prompt;
+  editor.setValue(problems[current].template);
+  document.getElementById("level").innerText = current + 1;
+  resetTimer();
+}
+function toggleTheme(){ document.body.classList.toggle("light-mode"); }
+function showHint(){ document.getElementById("output").innerText="💡 Hint: Think basic logic"; score-=5; document.getElementById("score").innerText=score; }
+
+/* Leaderboard  */
+function saveLeaderboard(s){
+  let lb=JSON.parse(localStorage.getItem("lb")||"[]");
+  lb.push({name:"Player",score:s}); lb.sort((a,b)=>b.score-a.score);
+  localStorage.setItem("lb",JSON.stringify(lb.slice(0,5)));
+  renderLeaderboard();
+}
+function renderLeaderboard(){
+  let lb=JSON.parse(localStorage.getItem("lb")||"[]");
+  document.getElementById("lbList").innerHTML=lb.map(p=>`<li>${p.name}: ${p.score}</li>`).join("");
+}
+renderLeaderboard();
+/* Made by Videesh and Prakriti  */
+</script>
+</body>
+</html>

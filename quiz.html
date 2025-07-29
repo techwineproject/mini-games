@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guess The Tech</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(#0f0c29, #302b63, #24243e);
+      overflow: hidden;
+      color: white;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    .glow-particle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #0ff;
+      border-radius: 50%;
+      box-shadow: 0 0 15px #0ff;
+      animation: floatParticle 15s infinite ease-in-out alternate;
+      opacity: 0.5;
+    }
+
+    .p1 { top: 20%; left: 10%; animation-delay: 0s; }
+    .p2 { top: 50%; left: 25%; animation-delay: 2s; }
+    .p3 { top: 80%; left: 70%; animation-delay: 4s; }
+    .p4 { top: 30%; left: 80%; animation-delay: 6s; }
+    .p5 { top: 70%; left: 40%; animation-delay: 1s; }
+
+    .tech-icon {
+      font-size: 2rem;
+      position: absolute;
+      animation: moveUpDown 6s ease-in-out infinite;
+      opacity: 0.7;
+    }
+
+    .tech-icon.delay1 { left: 20%; top: 30%; animation-delay: 1s; }
+    .tech-icon.delay2 { left: 40%; top: 60%; animation-delay: 2s; }
+    .tech-icon.delay3 { left: 70%; top: 20%; animation-delay: 3s; }
+    .tech-icon.delay4 { left: 85%; top: 50%; animation-delay: 4s; }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      top: 15%;
+      padding: 20px;
+    }
+
+    .typewriter {
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 3px solid #fff;
+      width: 0;
+      animation: typing 3s steps(40, end) forwards, blink 0.75s step-end infinite;
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+
+    .tagline {
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+      color: #ddd;
+    }
+
+    .game-area {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 2px dashed #fff;
+      padding: 40px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+      margin: 10px 0;
+      width: 60%;
+    }
+
+    .start-btn, .mute-btn {
+      padding: 12px 28px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 10px;
+      color: #fff;
+      background: linear-gradient(145deg, #6dd5ed, #2193b0);
+      box-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff;
+      transition: transform 0.2s, box-shadow 0.3s;
+    }
+
+    .start-btn:hover, .mute-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #0ff, 0 0 30px #0ff;
+    }
+
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    @keyframes blink {
+      from, to { border-color: transparent; }
+      50% { border-color: white; }
+    }
+
+    @keyframes floatParticle {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, -40px) scale(1.2); }
+    }
+
+    @keyframes moveUpDown {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="background">
+    <div class="glow-particle p1"></div>
+    <div class="glow-particle p2"></div>
+    <div class="glow-particle p3"></div>
+    <div class="glow-particle p4"></div>
+    <div class="glow-particle p5"></div>
+    <div class="tech-icon">💻</div>
+    <div class="tech-icon delay1">📱</div>
+    <div class="tech-icon delay2">🧠</div>
+    <div class="tech-icon delay3">⚙️</div>
+    <div class="tech-icon delay4">🕹️</div>
+  </div>
+
+  <div class="content">
+    <h1 class="typewriter">🤖 Welcome to "Guess The Tech"</h1>
+    <p class="tagline">Dive into the world of code & clues...</p>
+    <div class="game-area" id="game">
+      <p id="question">🎮 Loading question...</p>
+      <input type="text" id="answer" placeholder="Your Answer" />
+      <div>
+        <button class="start-btn" onclick="checkAnswer()">Submit</button>
+        <button class="start-btn" onclick="skipQuestion()">Skip</button>
+        <button class="start-btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+      </div>
+      <p id="feedback"></p>
+    </div>
+    <button class="start-btn" onclick="startGame()">Restart Game</button>
+    <button class="mute-btn" onclick="toggleMusic()">🔊</button>
+  </div>
+
+  <audio id="bg-music" autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/22/audio_667d9e21b1.mp3?filename=futuristic-beat-116001.mp3" type="audio/mpeg" />
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const questions = [{ q: "What does CPU stand for?", a: "central processing unit" },
+  { q: "Who is known as the father of computers?", a: "charles babbage" },
+  { q: "What is the brain of the computer?", a: "cpu" },
+  { q: "Which language is used for web apps?", a: "javascript" },
+  { q: "What is the shortcut key for copy?", a: "ctrl c" },
+
+  
+  { q: "What does GPU stand for?", a: "graphics processing unit" },
+  { q: "What does RAM stand for?", a: "random access memory" },
+  { q: "What does HTML stand for?", a: "hypertext markup language" },
+  { q: "What does CSS stand for?", a: "cascading style sheets" },
+  { q: "Who invented the World Wide Web?", a: "tim berners-lee" },
+  { q: "What company develops the Windows operating system?", a: "microsoft" },
+  { q: "What is the open-source operating system created by Linus Torvalds?", a: "linux" },
+  { q: "What popular programming language is named after a type of snake?", a: "python" },
+  { q: "What does IP stand for in IP address?", a: "internet protocol" },
+  { q: "The 'S' in HTTPS stands for what?", a: "secure" },
+  { q: "What does API stand for?", a: "application programming interface" },
+  { q: "What is the name of Google's web browser?", a: "chrome" },
+  { q: "Who is a co-founder of Apple Inc. alongside Steve Wozniak?", a: "steve jobs" },
+  { q: "What does PDF stand for?", a: "portable document format" },
+  { q: "What company makes Ryzen processors?", a: "amd" },
+  { q: "What component connects all other parts of a computer together?", a: "motherboard" },
+  { q: "What does GUI stand for?", a: "graphical user interface" },
+  { q: "What is the smallest unit of digital information?", a: "bit" },
+  { q: "How many bits are in a byte?", a: "8" },
+  { q: "What does LAN stand for?", a: "local area network" },
+  { q: "Malicious software is often shortened to what term?", a: "malware" },
+  { q: "What company owns GitHub?", a: "microsoft" },
+  { q: "What does VPN stand for?", a: "virtual private network" },
+  { q: "What does DNS stand for?", a: "domain name system" },
+  { q: "What technology is the foundation for cryptocurrencies like Bitcoin?", a: "blockchain" },
+  { q: "What is the name of Amazon's cloud computing platform?", a: "aws" },
+  { q: "A deceptive attempt to get sensitive information like passwords is called?", a: "phishing" },
+  { q: "What does IoT stand for?", a: "internet of things" },
+  { q: "Is an SSD or HDD generally faster?", a: "ssd" },
+  { q: "The first general-purpose electronic computer was called...?", a: "eniac" },
+  { q: "What character is used to select an element by its ID in CSS?", a: "#" },
+  { q: "What does URL stand for?", a: "uniform resource locator" },
+  { q: "What does AI stand for?", a: "artificial intelligence" },
+  { q: "What is the most popular mobile operating system in the world?", a: "android" },
+  { q: "What was the first commercially successful video game?", a: "pong" },
+  { q: "A piece of software that blocks unauthorized network access is a...?", a: "firewall" },
+  { q: "What company's original name was 'Backrub'?", a: "google" },
+  { q: "What does VR stand for?", a: "virtual reality" },
+  { q: "A set of instructions that a computer can execute is called a...?", a: "program" },
+  { q: "What is the term for unsolicited junk email?", a: "spam" },
+  { q: "Who is considered the first computer programmer?", a: "ada lovelace" },
+  { q: "What company makes the 'Core i' series of processors?", a: "intel" },
+  { q: "What does WWW stand for?", a: "world wide web" },
+  { q: "A program that seems harmless but is actually malicious is a...?", a: "trojan horse" },
+  { q: "What does ML stand for?", a: "machine learning" },
+  { q: "What version control system was created by the creator of Linux?", a: "git" },
+  { q: "The process of starting a computer is called...?", a: "booting" },
+  { q: "What does ROM stand for?", a: "read only memory" },
+  { q: "In programming, what does 'bug' refer to?", a: "an error" },
+  { q: "What company owns the video-sharing platform YouTube?", a: "google" },
+  { q: "What does AR stand for?", a: "augmented reality" },
+  { q: "What is a network of infected private computers controlled by hackers called?", a: "botnet" },
+  { q: "What unit measures a processor's clock speed?", a: "hertz" },
+  { q: "What does OS stand for?", a: "operating system" },
+  { q: "A security attack that floods a server with traffic is called a...?", a: "ddos attack" },
+  { q: "1024 gigabytes is equal to one...?", a: "terabyte" },
+  { q: "What operating system is developed by Apple for its computers?", a: "macos" },
+  { q: "What is the name of Mozilla's web browser?", a: "firefox" },
+  { q: "What does 2FA stand for?", a: "two factor authentication" },
+  { q: "What is the main circuit board in a computer?", a: "motherboard" },
+  { q: "Which company did Google acquire in 2005 to get into the mobile OS market?", a: "android" },
+  { q: "The process of converting information into a secure code is called...?", a: "encryption" },
+  { q: "What type of malware replicates itself to spread to other computers?", a: "worm" },
+  { q: "What is the file extension for an Excel spreadsheet?", a: "xlsx" },
+  { q: "Who is the CEO of Tesla?", a: "elon musk" },
+  { q: "What does Wi-Fi stand for?", a: "wireless fidelity" },
+  { q: "A unique address for a computer on a network is called an __ address.", a: "ip" },
+  { q: "What programming language developed by Sun Microsystems shares its name with a coffee bean?", a: "java" },
+  { q: "What is the standard keyboard layout called?", a: "qwerty" },
+  { q: "In web development, what language is used to structure the content of a page?", a: "html" },
+  { q: "What does SVG stand for in image formats?", a: "scalable vector graphics" },
+  { q: "What company did Facebook acquire in 2014, a leader in VR technology?", a: "oculus" },
+  { q: "What does BIOS stand for?", a: "basic input output system" },
+  { q: "A single point on a computer screen is called a...?", a: "pixel" },
+  { q: "Which programming language is the primary language for iOS app development?", a: "swift" },
+  { q: "What is the name for a hyperlink that is no longer working?", a: "dead link" },
+  { q: "What is the 'C' programming language's object-oriented successor?", a: "c++" },
+  { q: "What temporary storage area is used when you copy and paste?", a: "clipboard" },
+  { q: "A visual representation of data is called a...?", a: "chart" },
+  { q: "Which device converts digital signals to analog signals for transmission over telephone lines?", a: "modem" }]; 
+
+    let shuffledQuestions = [];
+    let currentIndex = 0;
+
+    const music = document.getElementById("bg-music");
+    const muteBtn = document.querySelector(".mute-btn");
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function startGame() {
+      shuffledQuestions = shuffle([...questions]);
+      currentIndex = 0;
+      showQuestion();
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("nextBtn").style.display = "none";
+    }
+
+    function showQuestion() {
+      const q = shuffledQuestions[currentIndex];
+      document.getElementById("question").textContent = "🤔 " + q.q;
+      document.getElementById("answer").value = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("nextBtn").style.display = "none";
+    }
+
+    function checkAnswer() {
+      const userAnswer = document.getElementById("answer").value.trim().toLowerCase();
+      const correctAnswer = shuffledQuestions[currentIndex].a.toLowerCase();
+
+      if (userAnswer === correctAnswer) {
+        document.getElementById("feedback").textContent = "✅ Correct!";
+        currentIndex++;
+        if (currentIndex < shuffledQuestions.length) {
+          setTimeout(() => {
+            showQuestion();
+          }, 1000);
+        } else {
+          document.getElementById("question").textContent = "🎉 You've completed all questions!";
+        }
+      } else {
+        document.getElementById("feedback").textContent = `❌ Incorrect. Correct Answer: ${correctAnswer}`;
+        document.getElementById("nextBtn").style.display = "inline-block";
+      }
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < shuffledQuestions.length) {
+        showQuestion();
+      } else {
+        document.getElementById("question").textContent = "🎉 You've completed all questions!";
+        document.getElementById("feedback").textContent = "";
+        document.getElementById("nextBtn").style.display = "none";
+      }
+    }
+
+    function skipQuestion() {
+      nextQuestion();
+    }
+
+    function toggleMusic() {
+      if (music.muted) {
+        music.muted = false;
+        muteBtn.textContent = "🔊";
+      } else {
+        music.muted = true;
+        muteBtn.textContent = "🔇";
+      }
+    }
+
+    window.onload = startGame;
+  </script>
+</body>
+</html>

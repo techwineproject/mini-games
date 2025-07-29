@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 GameZone - Select Your Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated Background - Fixed Color */
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .background::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .floating-shapes {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .shape {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 25s infinite linear;
+    }
+
+    .shape:nth-child(1) {
+      width: 100px;
+      height: 100px;
+      left: 15%;
+      animation-delay: 0s;
+    }
+
+    .shape:nth-child(2) {
+      width: 150px;
+      height: 150px;
+      left: 75%;
+      animation-delay: 3s;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .shape:nth-child(3) {
+      width: 80px;
+      height: 80px;
+      left: 45%;
+      animation-delay: 6s;
+    }
+
+    .shape:nth-child(4) {
+      width: 120px;
+      height: 120px;
+      left: 90%;
+      animation-delay: 9s;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .shape:nth-child(5) {
+      width: 180px;
+      height: 180px;
+      left: 25%;
+      animation-delay: 12s;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* Particles */
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      animation: twinkle 4s infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Loading Screen - Centered */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loading-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-spinner {
+      width: 80px;
+      height: 80px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 30px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .loading-subtext {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* Main Content */
+    .main-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .main-content.visible {
+      opacity: 1;
+    }
+
+    .game-selection {
+      text-align: center;
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .header {
+      margin-bottom: 60px;
+      animation: slideInDown 1s ease;
+    }
+
+    .header h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(45deg, #00d4ff, #ff6b9d, #c471f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 15px;
+      text-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 300;
+    }
+
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Game Cards - Reduced Size */
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      justify-content: center;
+      padding: 0 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+      animation: slideInUp 1s ease;
+      animation-fill-mode: both;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .game-card:nth-child(1) {
+      animation-delay: 0.2s;
+    }
+
+    .game-card:nth-child(2) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.6s;
+    }
+
+    .game-card:hover::before {
+      transform: translateX(100%);
+    }
+
+    .game-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 25px 50px rgba(0, 212, 255, 0.3);
+      border-color: rgba(0, 212, 255, 0.5);
+    }
+
+    .game-image {
+      position: relative;
+      overflow: hidden;
+      height: 200px;
+    }
+
+    .game-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+
+    .game-card:hover img {
+      transform: scale(1.1);
+    }
+
+    .game-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-card:hover .game-overlay {
+      opacity: 1;
+    }
+
+    .play-icon {
+      font-size: 2.5rem;
+      color: #00d4ff;
+      animation: pulse 2s infinite;
+    }
+
+    .game-info {
+      padding: 25px;
+      text-align: left;
+    }
+
+    .game-info h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      background: linear-gradient(45deg, #00d4ff, #ff6b9d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .game-description {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .game-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .difficulty {
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .difficulty.easy {
+      background: rgba(0, 255, 0, 0.2);
+      color: #00ff88;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+
+    .difficulty.medium {
+      background: rgba(255, 165, 0, 0.2);
+      color: #ffaa00;
+      border: 1px solid rgba(255, 165, 0, 0.3);
+    }
+
+    .play-button {
+      background: linear-gradient(45deg, #00d4ff, #0099cc);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+      font-size: 0.9rem;
+    }
+
+    .play-button:hover {
+      background: linear-gradient(45deg, #00b8e6, #0088bb);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 212, 255, 0.4);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.5rem;
+      }
+      
+      .games {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        max-width: 350px;
+      }
+      
+      .game-card {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .game-info {
+        padding: 20px;
+      }
+      
+      .game-info h2 {
+        font-size: 1.4rem;
+      }
+      
+      .game-image {
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading Games</div>
+      <div class="loading-subtext">Preparing your gaming experience...</div>
+    </div>
+  </div>
+
+  <!-- Animated Background -->
+  <div class="background">
+    <div class="floating-shapes">
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <div class="game-selection">
+      <div class="header">
+        <h1><i class="fas fa-gamepad"></i> Choose Your Adventure</h1>
+        <p>Select a game and test your skills in our gaming universe</p>
+      </div>
+      
+      <div class="games">
+        <div class="game-card" onclick="navigateToGame('python.html')">
+          <div class="game-image">
+            <img src="rightimg.jpg" alt="Python Coding Puzzle" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMyMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMUUxRTFFIi8+Cjx0ZXh0IHg9IjE2MCIgeT0iMTAwIiBmaWxsPSIjMDBEMkZGIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNTAiPvCfkI08L3RleHQ+Cjx0ZXh0IHg9IjE2MCIgeT0iMTUwIiBmaWxsPSIjRkZGIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiPlB5dGhvbiBQdXp6bGU8L3RleHQ+Cjwvc3ZnPgo='">
+            <div class="game-overlay">
+              <i class="fas fa-play play-icon"></i>
+            </div>
+          </div>
+          <div class="game-info">
+            <h2><i class="fab fa-python"></i> Python Coding Puzzle</h2>
+            <p class="game-description">Challenge your programming skills with interactive Python puzzles and coding challenges.</p>
+            <div class="game-stats">
+              <span class="difficulty medium">Medium</span>
+              <button class="play-button">
+                <i class="fas fa-play"></i> Play Now
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-card" onclick="navigateToGame('quiz.html')">
+          <div class="game-image">
+            <img src="leftimg.jpg" alt="Tech Quiz Game" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMyMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMUUxRTFFIi8+Cjx0ZXh0IHg9IjE2MCIgeT0iMTAwIiBmaWxsPSIjRkY2QjlEIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNTAiPuKdkzwvdGV4dD4KPHRleHQgeD0iMTYwIiB5PSIxNTAiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiI+VGVjaCBRdWl6PC90ZXh0Pgo8L3N2Zz4K'">
+            <div class="game-overlay">
+              <i class="fas fa-play play-icon"></i>
+            </div>
+          </div>
+          <div class="game-info">
+            <h2><i class="fas fa-question-circle"></i> Guess The Tech</h2>
+            <p class="game-description">Test your technology knowledge with fun trivia questions and tech challenges.</p>
+            <div class="game-stats">
+              <span class="difficulty easy">Easy</span>
+              <button class="play-button">
+                <i class="fas fa-play"></i> Play Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Create particles
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 60;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 4 + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Loading screen functionality
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('loadingScreen');
+      const mainContent = document.getElementById('mainContent');
+      
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => {
+        mainContent.classList.add('visible');
+      }, 300);
+    }
+
+    // Navigation function with loading
+    function navigateToGame(url) {
+      // Show loading effect
+      const loadingScreen = document.getElementById('loadingScreen');
+      const mainContent = document.getElementById('mainContent');
+      
+      loadingScreen.classList.remove('hidden');
+      mainContent.classList.remove('visible');
+      
+      // Simulate loading delay
+      setTimeout(() => {
+        window.location.href = url;
+      }, 1000);
+    }
+
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      createParticles();
+      
+      // Hide loading screen after everything is loaded
+      setTimeout(() => {
+        hideLoadingScreen();
+      }, 2000);
+    });
+
+    // Add click sound effect (optional)
+    document.querySelectorAll('.game-card').forEach(card => {
+      card.addEventListener('click', function() {
+        // Add click feedback
+        this.style.transform = 'translateY(-10px) scale(0.98)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 150);
+      });
+    });
+  </script>
+</body>
+</html>
